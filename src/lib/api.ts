@@ -110,6 +110,15 @@ export async function apiPost<T>(url: string, body?: unknown, config?: AxiosRequ
   return data.data
 }
 
+/** Send a POST request that intentionally returns no response body. */
+export async function apiPostVoid(
+  url: string,
+  body?: unknown,
+  config?: AxiosRequestConfig,
+): Promise<void> {
+  await http.post(url, body, config)
+}
+
 export async function apiPatch<T>(url: string, body?: unknown): Promise<T> {
   const { data } = await http.patch<ApiEnvelope<T>>(url, body)
   return data.data

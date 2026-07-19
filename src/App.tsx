@@ -7,6 +7,8 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { FullPageLoader } from '@/components/ui/Spinner'
 
 const LoginPage = lazy(() => import('@/features/auth/LoginPage'))
+const ForgotPasswordPage = lazy(() => import('@/features/auth/ForgotPasswordPage'))
+const ResetPasswordPage = lazy(() => import('@/features/auth/ResetPasswordPage'))
 const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'))
 const ProfilePage = lazy(() => import('@/features/profile/ProfilePage'))
 const ResourcePage = lazy(() => import('@/features/resources/ResourcePage'))
@@ -56,6 +58,8 @@ export default function App() {
       <Suspense fallback={<FullPageLoader />}>
         <Routes>
           <Route path="/login" element={<LoginGate />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/app" element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
               <Route index element={<DashboardPage />} />

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { GraduationCap, Mail, Lock, Eye, EyeOff, ArrowRight, Users, BookOpen, Bus } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '@/store/auth'
@@ -44,7 +44,7 @@ export default function LoginPage() {
 
         <div className="relative max-w-md">
           <h1 className="font-display text-4xl font-extrabold leading-tight">
-            Run your entire school from one nice dashboard.
+            Run your entire school from one beautiful dashboard.
           </h1>
           <p className="mt-4 text-brand-100">
             Students, staff, attendance, exams, finance, library and transport — unified in a single
@@ -129,6 +129,15 @@ export default function LoginPage() {
                   {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+            </div>
+
+            <div className="flex justify-end">
+              <Link
+                to="/forgot-password"
+                className="text-sm font-medium text-brand-600 hover:text-brand-700"
+              >
+                Forgot password?
+              </Link>
             </div>
 
             <button type="submit" className="btn-primary w-full py-3" disabled={loading}>
