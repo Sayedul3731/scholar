@@ -9,20 +9,39 @@ import type { ApiEnvelope, AuthTokens } from '@/types'
 const ACCESS_KEY = 'sms_access_token'
 const REFRESH_KEY = 'sms_refresh_token'
 
+function getCookie(name: string): string | null {
+  const prefix = `${encodeURIComponent(name)}=`
+  const value = document.cookie
+    .split('; ')
+    .find((entry) => entry.startsWith(prefix))
+    ?.slice(prefix.length)
+
+  return value ? decodeURIComponent(value) : null
+}
+
+function setCookie(name: string, value: string) {
+  const secure = window.location.protocol === 'https:' ? '; Secure' : ''
+  document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; Path=/; SameSite=Lax${secure}`
+}
+
+function removeCookie(name: string) {
+  document.cookie = `${encodeURIComponent(name)}=; Path=/; Max-Age=0; SameSite=Lax`
+}
+
 export const tokenStore = {
   get access() {
-    return localStorage.getItem(ACCESS_KEY)
+    return getCookie(ACCESS_KEY)
   },
   get refresh() {
-    return localStorage.getItem(REFRESH_KEY)
+    return getCookie(REFRESH_KEY)
   },
   set(tokens: AuthTokens) {
-    localStorage.setItem(ACCESS_KEY, tokens.accessToken)
-    localStorage.setItem(REFRESH_KEY, tokens.refreshToken)
+    setCookie(ACCESS_KEY, tokens.accessToken)
+    setCookie(REFRESH_KEY, tokens.refreshToken)
   },
   clear() {
-    localStorage.removeItem(ACCESS_KEY)
-    localStorage.removeItem(REFRESH_KEY)
+    removeCookie(ACCESS_KEY)
+    removeCookie(REFRESH_KEY)
   },
 }
 

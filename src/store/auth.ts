@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { apiGet, apiPost, tokenStore } from '@/lib/api'
+import { apiGet, apiPost, http, tokenStore } from '@/lib/api'
 import type { AuthTokens, User } from '@/types'
 
 interface LoginPayload {
@@ -11,7 +11,7 @@ interface AuthState {
   user: User | null
   status: 'idle' | 'loading' | 'authenticated' | 'unauthenticated'
   login: (payload: LoginPayload) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   bootstrap: () => Promise<void>
   refreshProfile: () => Promise<void>
 }
@@ -27,9 +27,16 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user, status: 'authenticated' })
   },
 
-  logout() {
-    tokenStore.clear()
-    set({ user: null, status: 'unauthenticated' })
+  async logout() {
+    const refreshToken = tokenStore.refresh
+    try {
+      if (refreshToken) {
+        await http.post('/auth/logout', { refreshToken })
+      }
+    } finally {
+      tokenStore.clear()
+      set({ user: null, status: 'unauthenticated' })
+    }
   },
 
   async bootstrap() {
