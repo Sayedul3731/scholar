@@ -137,12 +137,24 @@ export async function apiDelete<T = void>(url: string): Promise<T> {
 /** Extract a human-readable message from an API error. */
 export function getApiError(error: unknown): string {
   if (axios.isAxiosError(error)) {
-    const payload = error.response?.data as { message?: string | string[] } | undefined
+    const payload = error.response?.data as
+      | {
+          message?: string | string[]
+          details?: string
+        }
+      | undefined
     const msg = payload?.message
     if (Array.isArray(msg)) return msg.join(', ')
-    if (typeof msg === 'string') return msg
+    if (typeof msg === 'string') {
+      // The API includes diagnostic details only outside production. Prefer
+      // those when the top-level message is the generic server-error text.
+      if (msg === 'Internal server error' && payload?.details) {
+        return payload.details
+      }
+      return msg
+    }
     if (error.code === 'ERR_NETWORK') return 'Cannot reach the server. Is the API running?'
-    return error.message
+    return error.message || 'The request could not be completed.'
   }
   return 'Something went wrong. Please try again.'
 }

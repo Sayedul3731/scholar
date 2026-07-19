@@ -57,6 +57,13 @@ const GENDER_OPTIONS = [
   { label: 'Other', value: 'other' },
 ]
 
+const STUDENT_PARENT_RELATION_OPTIONS = [
+  { label: 'Father', value: 'father' },
+  { label: 'Mother', value: 'mother' },
+  { label: 'Guardian', value: 'guardian' },
+  { label: 'Other', value: 'other' },
+]
+
 const DAY_OPTIONS = [
   'monday',
   'tuesday',
@@ -96,6 +103,19 @@ const ROLE_OPTIONS = [
 // ---- Relation label helpers ----
 const studentLabel = (i: Record<string, unknown>) =>
   i.user ? `${fullName(rec(i.user))} · ${i.admissionNumber ?? ''}`.trim() : String(i.admissionNumber ?? i.id)
+const parentLabel = (i: Record<string, unknown>) =>
+  i.user ? fullName(rec(i.user)) : String(i.id)
+const guardianName = (student: Record<string, unknown>) => {
+  const relationships = Array.isArray(student.studentParents) ? student.studentParents : []
+  const guardian =
+    relationships.find(
+        (relationship) =>
+          rec(relationship).relation === 'guardian' && rec(relationship).parent,
+      ) ?? relationships.find((relationship) => rec(relationship).parent)
+  return guardian
+    ? fullName(rec(rec(guardian).parent).user as { firstName?: string; lastName?: string })
+    : '—'
+}
 const teacherLabel = (i: Record<string, unknown>) =>
   i.user ? `${fullName(rec(i.user))} · ${i.employeeId ?? ''}`.trim() : String(i.employeeId ?? i.id)
 const userLabel = (i: Record<string, unknown>) =>
@@ -161,7 +181,7 @@ export const RESOURCES: Record<string, ResourceConfig> = {
       ...personColumns(),
       { key: 'admissionNumber', header: 'Admission #', render: (r) => String(r.admissionNumber ?? '—') },
       { key: 'gender', header: 'Gender', render: (r) => titleCase(r.gender as string) },
-      { key: 'guardianName', header: 'Guardian', render: (r) => String(r.guardianName ?? '—') },
+      { key: 'guardianName', header: 'Guardian', render: guardianName },
       { key: 'dateOfBirth', header: 'Date of birth', render: (r) => formatDate(r.dateOfBirth as string) },
     ],
     fields: [
@@ -170,8 +190,6 @@ export const RESOURCES: Record<string, ResourceConfig> = {
       { name: 'dateOfBirth', label: 'Date of birth', type: 'date', required: true },
       { name: 'gender', label: 'Gender', type: 'select', required: true, options: GENDER_OPTIONS },
       { name: 'classRoomId', label: 'Classroom', type: 'relation', relation: { path: '/classes', label: classroomLabel } },
-      { name: 'guardianName', label: 'Guardian name', type: 'text' },
-      { name: 'guardianPhone', label: 'Guardian phone', type: 'text' },
       { name: 'address', label: 'Address', type: 'textarea', full: true },
     ],
   },
@@ -206,7 +224,7 @@ export const RESOURCES: Record<string, ResourceConfig> = {
     path: '/parents',
     title: 'Parents',
     singular: 'Parent',
-    subtitle: 'Guardians linked to students',
+    subtitle: 'Parent and guardian accounts',
     icon: <Contact className="h-5 w-5" />,
     viewRoles: ADMIN_ROLES,
     writeRoles: ADMIN_ROLES,
@@ -219,6 +237,28 @@ export const RESOURCES: Record<string, ResourceConfig> = {
     fields: [
       ...userGroupFields(),
       { name: 'occupation', label: 'Occupation', type: 'text' },
+    ],
+  },
+
+  'student-parents': {
+    key: 'student-parents',
+    path: '/student-parents',
+    title: 'Student Parents',
+    singular: 'Student-parent relationship',
+    subtitle: 'Links between students and their parents or guardians',
+    icon: <Link2 className="h-5 w-5" />,
+    viewRoles: ADMIN_ROLES,
+    writeRoles: ADMIN_ROLES,
+    columns: [
+      { key: 'student', header: 'Student', render: (r) => studentLabel(rec(r.student)) },
+      { key: 'parent', header: 'Parent', render: (r) => parentLabel(rec(r.parent)) },
+      { key: 'relation', header: 'Relationship', render: (r) => titleCase(r.relation as string) },
+      createdCol,
+    ],
+    fields: [
+      { name: 'studentId', label: 'Student', type: 'relation', required: true, relation: { path: '/students', label: studentLabel } },
+      { name: 'parentId', label: 'Parent', type: 'relation', required: true, relation: { path: '/parents', label: parentLabel } },
+      { name: 'relation', label: 'Relationship', type: 'select', required: true, options: STUDENT_PARENT_RELATION_OPTIONS },
     ],
   },
 

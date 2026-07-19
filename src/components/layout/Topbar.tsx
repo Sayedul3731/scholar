@@ -5,7 +5,7 @@ import { useAuthStore } from '@/store/auth'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 import { roleTone } from '@/config/roles'
-import { fullName } from '@/lib/utils'
+import { fullName, titleCase } from '@/lib/utils'
 
 export function Topbar({ onMenu }: { onMenu: () => void }) {
   const user = useAuthStore((s) => s.user)
@@ -36,7 +36,7 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
         </button>
         <div>
           <p className="text-sm font-semibold text-slate-800">
-            {greeting}, {user?.firstName} 👋
+            {greeting}, {titleCase(user?.firstName)} 👋
           </p>
           <p className="hidden text-xs text-slate-400 sm:block">
             Here's what's happening at your school today.

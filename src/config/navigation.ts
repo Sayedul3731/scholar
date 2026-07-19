@@ -7,7 +7,7 @@ export interface NavGroup {
 }
 
 export const NAV_GROUPS: NavGroup[] = [
-  { label: 'People', items: ['students', 'teachers', 'parents', 'staffs', 'users'] },
+  { label: 'People', items: ['students', 'teachers', 'parents', 'student-parents', 'staffs', 'users'] },
   {
     label: 'Academics',
     items: [

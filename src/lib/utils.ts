@@ -44,5 +44,6 @@ export function titleCase(value?: string | null) {
 /** Build a short display name for a user-like object. */
 export function fullName(u?: { firstName?: string; lastName?: string } | null) {
   if (!u) return '—'
-  return `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || '—'
+  const name = `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim()
+  return name ? titleCase(name) : '—'
 }
