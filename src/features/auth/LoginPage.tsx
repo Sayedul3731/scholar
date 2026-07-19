@@ -44,7 +44,7 @@ export default function LoginPage() {
 
         <div className="relative max-w-md">
           <h1 className="font-display text-4xl font-extrabold leading-tight">
-            Run your entire school from one beautiful dashboard.
+            Run your entire school from one nice dashboard.
           </h1>
           <p className="mt-4 text-brand-100">
             Students, staff, attendance, exams, finance, library and transport — unified in a single
