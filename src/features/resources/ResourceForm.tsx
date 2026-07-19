@@ -53,13 +53,26 @@ export function ResourceForm({
 
   const set = (name: string, value: unknown) => setValues((p) => ({ ...p, [name]: value }))
 
+  const isEmpty = (v: unknown) =>
+    v === '' || v === undefined || v === null || (Array.isArray(v) && v.length === 0)
+
   const validate = () => {
     const errs: Record<string, string> = {}
     for (const f of fields) {
       if (!f.required) continue
-      const v = values[f.name]
-      const empty = v === '' || v === undefined || v === null || (Array.isArray(v) && v.length === 0)
-      if (empty) errs[f.name] = `${f.label} is required`
+      if (isEmpty(values[f.name])) errs[f.name] = `${f.label} is required`
+    }
+    for (const group of config.requireOneOf ?? []) {
+      const present = group.filter((name) => fields.some((f) => f.name === name))
+      if (present.length === 0) continue
+      const satisfied = present.some((name) => !isEmpty(values[name]))
+      if (!satisfied) {
+        const labels = present.map(
+          (name) => fields.find((f) => f.name === name)?.label ?? name,
+        )
+        const msg = `Provide at least one: ${labels.join(' or ')}`
+        for (const name of present) errs[name] = msg
+      }
     }
     setErrors(errs)
     return Object.keys(errs).length === 0

@@ -3,7 +3,7 @@ import { apiGet, apiPost, http, tokenStore } from '@/lib/api'
 import type { AuthTokens, User } from '@/types'
 
 interface LoginPayload {
-  email: string
+  identifier: string
   password: string
 }
 

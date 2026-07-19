@@ -61,6 +61,19 @@ export interface ResourceConfig<T = Record<string, unknown>> {
   writeRoles?: Role[]
   searchable?: boolean
   readOnly?: boolean
+  /**
+   * Enables an admin "reset password" row action that PATCHes
+   * `/users/{userId}/password`. `userId` resolves the linked User id from a
+   * row (defaults to `row.id`, e.g. for the users resource itself).
+   */
+  passwordReset?: {
+    userId?: (row: Record<string, unknown>) => string | undefined
+  }
   columns: ResourceColumn<T>[]
   fields: FieldConfig[]
+  /**
+   * Cross-field rule: each inner array lists field names where at least one
+   * must be provided (e.g. [['email', 'phone']]).
+   */
+  requireOneOf?: string[][]
 }

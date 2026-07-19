@@ -46,7 +46,7 @@ export interface RbacRole {
 
 export interface User {
   id: string
-  email: string
+  email?: string | null
   firstName: string
   lastName: string
   phone?: string | null

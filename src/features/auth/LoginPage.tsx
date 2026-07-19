@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { GraduationCap, Mail, Lock, Eye, EyeOff, ArrowRight, Users, BookOpen, Bus } from 'lucide-react'
+import { GraduationCap, AtSign, Lock, Eye, EyeOff, ArrowRight, Users, BookOpen, Bus } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '@/store/auth'
 import { getApiError } from '@/lib/api'
@@ -9,7 +9,7 @@ import { Spinner } from '@/components/ui/Spinner'
 export default function LoginPage() {
   const login = useAuthStore((s) => s.login)
   const navigate = useNavigate()
-  const [email, setEmail] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [show, setShow] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -18,7 +18,7 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     try {
-      await login({ email, password })
+      await login({ identifier: identifier.trim(), password })
       toast.success('Welcome back!')
       navigate('/app', { replace: true })
     } catch (err) {
@@ -93,17 +93,17 @@ export default function LoginPage() {
 
           <form onSubmit={submit} className="mt-8 space-y-5">
             <div>
-              <label className="label">Email address</label>
+              <label className="label">Email or phone</label>
               <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <AtSign className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
-                  type="email"
+                  type="text"
                   required
-                  autoComplete="email"
+                  autoComplete="username"
                   className="input pl-10"
-                  placeholder="you@school.edu"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@school.edu or 01700000000"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                 />
               </div>
             </div>

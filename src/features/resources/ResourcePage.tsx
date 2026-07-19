@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { Plus, Search, Pencil, Trash2, Lock } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, Lock, KeyRound } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getResource } from '@/config/resources'
 import { useResourceList, useResourceMutations } from '@/hooks/api-hooks'
 import { useAuthStore } from '@/store/auth'
-import { getApiError } from '@/lib/api'
+import { apiPatch, getApiError } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { DataTable } from '@/components/ui/DataTable'
 import { Pagination } from '@/components/ui/Pagination'
@@ -14,6 +14,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ResourceForm } from './ResourceForm'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Spinner } from '@/components/ui/Spinner'
+import { fullName } from '@/lib/utils'
 
 type Row = Record<string, unknown> & { id: string }
 
@@ -28,6 +29,7 @@ export default function ResourcePage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Row | null>(null)
   const [deleting, setDeleting] = useState<Row | null>(null)
+  const [resetting, setResetting] = useState<Row | null>(null)
 
   // Reset view state when switching resources.
   useEffect(() => {
@@ -36,6 +38,7 @@ export default function ResourcePage() {
     setSearchInput('')
     setFormOpen(false)
     setEditing(null)
+    setResetting(null)
   }, [resource])
 
   // Debounce search input.
@@ -159,6 +162,15 @@ export default function ResourcePage() {
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
+                      {config.passwordReset && (
+                        <button
+                          className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-amber-50 hover:text-amber-600"
+                          title="Reset password"
+                          onClick={() => setResetting(row)}
+                        >
+                          <KeyRound className="h-4 w-4" />
+                        </button>
+                      )}
                       <button
                         className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-rose-50 hover:text-rose-600"
                         title="Delete"
@@ -214,6 +226,111 @@ export default function ResourcePage() {
         title={`Delete ${config.singular.toLowerCase()}?`}
         message="This record will be removed. This action cannot be undone."
       />
+
+      {config.passwordReset && (
+        <ResetPasswordModal
+          resolveUserId={config.passwordReset.userId ?? ((r) => r.id as string)}
+          row={resetting}
+          onClose={() => setResetting(null)}
+        />
+      )}
     </div>
+  )
+}
+
+function ResetPasswordModal({
+  resolveUserId,
+  row,
+  onClose,
+}: {
+  resolveUserId: (row: Record<string, unknown>) => string | undefined
+  row: Row | null
+  onClose: () => void
+}) {
+  const [next, setNext] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    setNext('')
+    setConfirm('')
+  }, [row])
+
+  const submit = async () => {
+    if (!row) return
+    const userId = resolveUserId(row)
+    if (!userId) {
+      toast.error('This record has no linked user account')
+      return
+    }
+    if (next.length < 8) {
+      toast.error('Password must be at least 8 characters')
+      return
+    }
+    if (next !== confirm) {
+      toast.error('Passwords do not match')
+      return
+    }
+    setLoading(true)
+    try {
+      await apiPatch(`/users/${userId}/password`, { newPassword: next })
+      toast.success('Password reset')
+      onClose()
+    } catch (e) {
+      toast.error(getApiError(e))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const nameSource = (row?.user as Record<string, unknown> | undefined) ?? row ?? {}
+  const displayName = fullName(nameSource)
+
+  return (
+    <Modal
+      open={Boolean(row)}
+      onClose={onClose}
+      title="Reset password"
+      description={row ? `Set a new password for ${displayName}.` : undefined}
+      footer={
+        <>
+          <button type="button" className="btn-outline" onClick={onClose} disabled={loading}>
+            Cancel
+          </button>
+          <button type="button" className="btn-primary" onClick={submit} disabled={loading}>
+            {loading && <Spinner className="h-4 w-4" />}
+            Reset password
+          </button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <div>
+          <label className="label">New password</label>
+          <input
+            type="password"
+            autoComplete="new-password"
+            className="input"
+            placeholder="At least 8 characters"
+            value={next}
+            onChange={(e) => setNext(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="label">Confirm new password</label>
+          <input
+            type="password"
+            autoComplete="new-password"
+            className="input"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+          />
+        </div>
+        <p className="text-xs text-slate-400">
+          The user can sign in with this new password immediately. Useful for accounts without an
+          email to self-reset.
+        </p>
+      </div>
+    </Modal>
   )
 }

@@ -1,10 +1,14 @@
-import { Mail, Phone, ShieldCheck, KeyRound, BadgeCheck } from 'lucide-react'
+import { useState } from 'react'
+import { Mail, Phone, ShieldCheck, KeyRound, BadgeCheck, Eye, EyeOff } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { useAuthStore } from '@/store/auth'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
+import { Spinner } from '@/components/ui/Spinner'
 import { roleTone } from '@/config/roles'
 import { fullName } from '@/lib/utils'
+import { apiPatch, getApiError } from '@/lib/api'
 
 export default function ProfilePage() {
   const user = useAuthStore((s) => s.user)
@@ -29,7 +33,7 @@ export default function ProfilePage() {
             </div>
           </div>
           <div className="space-y-4 p-6">
-            <Row icon={<Mail className="h-4 w-4" />} label="Email" value={user.email} />
+            <Row icon={<Mail className="h-4 w-4" />} label="Email" value={user.email ?? '—'} />
             <Row icon={<Phone className="h-4 w-4" />} label="Phone" value={user.phone ?? '—'} />
             <Row
               icon={<BadgeCheck className="h-4 w-4" />}
@@ -81,8 +85,115 @@ export default function ProfilePage() {
               <p className="text-sm text-slate-400">No granular permissions assigned.</p>
             )}
           </div>
+
+          <ChangePasswordCard />
         </div>
       </div>
+    </div>
+  )
+}
+
+function ChangePasswordCard() {
+  const user = useAuthStore((s) => s.user)
+  const login = useAuthStore((s) => s.login)
+  const [current, setCurrent] = useState('')
+  const [next, setNext] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [show, setShow] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (next.length < 8) {
+      toast.error('New password must be at least 8 characters')
+      return
+    }
+    if (next !== confirm) {
+      toast.error('New password and confirmation do not match')
+      return
+    }
+    setLoading(true)
+    try {
+      await apiPatch('/users/me/password', { currentPassword: current, newPassword: next })
+      // Changing the password revokes every session (logging out other
+      // devices). Silently re-authenticate this device with the new password
+      // so the current session keeps working.
+      const identifier = user?.email ?? user?.phone
+      if (identifier) {
+        await login({ identifier, password: next })
+      }
+      toast.success('Password changed. Other devices have been signed out.')
+      setCurrent('')
+      setNext('')
+      setConfirm('')
+    } catch (err) {
+      toast.error(getApiError(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="card p-6">
+      <div className="mb-4 flex items-center gap-2.5">
+        <div className="grid h-9 w-9 place-items-center rounded-xl bg-amber-100 text-amber-600">
+          <KeyRound className="h-5 w-5" />
+        </div>
+        <h3 className="font-display text-lg font-bold text-slate-900">Change password</h3>
+      </div>
+
+      <form onSubmit={submit} className="space-y-4">
+        <div>
+          <label className="label">Current password</label>
+          <input
+            type={show ? 'text' : 'password'}
+            required
+            autoComplete="current-password"
+            className="input"
+            value={current}
+            onChange={(e) => setCurrent(e.target.value)}
+          />
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className="label">New password</label>
+            <input
+              type={show ? 'text' : 'password'}
+              required
+              autoComplete="new-password"
+              className="input"
+              placeholder="At least 8 characters"
+              value={next}
+              onChange={(e) => setNext(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="label">Confirm new password</label>
+            <input
+              type={show ? 'text' : 'password'}
+              required
+              autoComplete="new-password"
+              className="input"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-700"
+            onClick={() => setShow((s) => !s)}
+          >
+            {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {show ? 'Hide' : 'Show'} passwords
+          </button>
+          <button type="submit" className="btn-primary" disabled={loading}>
+            {loading && <Spinner className="h-4 w-4" />}
+            Update password
+          </button>
+        </div>
+      </form>
     </div>
   )
 }

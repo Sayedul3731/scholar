@@ -145,24 +145,25 @@ function personColumns() {
     {
       key: 'name',
       header: 'Name',
-      render: (r: Record<string, unknown>) => (
-        <div>
-          <p className="font-semibold text-slate-800">{fullName(rec(r.user))}</p>
-          <p className="text-xs text-slate-400">{String(rec(r.user).email ?? '')}</p>
-        </div>
-      ),
+      render: (r: Record<string, unknown>) => {
+        const user = rec(r.user)
+        return (
+          <div>
+            <p className="font-semibold text-slate-800">{fullName(user)}</p>
+            <p className="text-xs text-slate-400">{String(user.phone ?? user.email ?? '')}</p>
+          </div>
+        )
+      },
     },
   ]
 }
 
-const userGroupFields = (withPhone = true) => [
+const userGroupFields = () => [
   { name: 'firstName', label: 'First name', type: 'text' as const, required: true, group: 'user', hideOnEdit: true },
   { name: 'lastName', label: 'Last name', type: 'text' as const, required: true, group: 'user', hideOnEdit: true },
-  { name: 'email', label: 'Email', type: 'email' as const, required: true, group: 'user', hideOnEdit: true },
+  { name: 'email', label: 'Email', type: 'email' as const, group: 'user', hideOnEdit: true, helpText: 'Provide an email or a phone number' },
+  { name: 'phone', label: 'Phone', type: 'text' as const, group: 'user', hideOnEdit: true, helpText: 'Provide a phone number or an email' },
   { name: 'password', label: 'Password', type: 'password' as const, required: true, group: 'user', hideOnEdit: true, helpText: 'Minimum 8 characters' },
-  ...(withPhone
-    ? [{ name: 'phone', label: 'Phone', type: 'text' as const, group: 'user', hideOnEdit: true }]
-    : []),
 ]
 
 export const RESOURCES: Record<string, ResourceConfig> = {
@@ -184,6 +185,8 @@ export const RESOURCES: Record<string, ResourceConfig> = {
       { key: 'guardianName', header: 'Guardian', render: guardianName },
       { key: 'dateOfBirth', header: 'Date of birth', render: (r) => formatDate(r.dateOfBirth as string) },
     ],
+    requireOneOf: [['email', 'phone']],
+    passwordReset: { userId: (r) => rec(r.user).id as string | undefined },
     fields: [
       ...userGroupFields(),
       { name: 'admissionNumber', label: 'Admission number', type: 'text', required: true },
@@ -210,6 +213,8 @@ export const RESOURCES: Record<string, ResourceConfig> = {
       { key: 'qualification', header: 'Qualification', render: (r) => String(r.qualification ?? '—') },
       { key: 'joiningDate', header: 'Joined', render: (r) => formatDate(r.joiningDate as string) },
     ],
+    requireOneOf: [['email', 'phone']],
+    passwordReset: { userId: (r) => rec(r.user).id as string | undefined },
     fields: [
       ...userGroupFields(),
       { name: 'employeeId', label: 'Employee ID', type: 'text', required: true },
@@ -234,6 +239,8 @@ export const RESOURCES: Record<string, ResourceConfig> = {
       { key: 'occupation', header: 'Occupation', render: (r) => String(r.occupation ?? '—') },
       createdCol,
     ],
+    requireOneOf: [['email', 'phone']],
+    passwordReset: { userId: (r) => rec(r.user).id as string | undefined },
     fields: [
       ...userGroupFields(),
       { name: 'occupation', label: 'Occupation', type: 'text' },
@@ -277,6 +284,8 @@ export const RESOURCES: Record<string, ResourceConfig> = {
       { key: 'department', header: 'Department', render: (r) => String(r.department ?? '—') },
       createdCol,
     ],
+    requireOneOf: [['email', 'phone']],
+    passwordReset: { userId: (r) => rec(r.user).id as string | undefined },
     fields: [
       ...userGroupFields(),
       { name: 'department', label: 'Department', type: 'text' },
@@ -293,6 +302,7 @@ export const RESOURCES: Record<string, ResourceConfig> = {
     viewRoles: ADMIN_ROLES,
     writeRoles: ADMIN_ROLES,
     searchable: true,
+    passwordReset: {},
     columns: [
       {
         key: 'name',
@@ -300,7 +310,7 @@ export const RESOURCES: Record<string, ResourceConfig> = {
         render: (r) => (
           <div>
             <p className="font-semibold text-slate-800">{fullName(r)}</p>
-            <p className="text-xs text-slate-400">{String(r.email ?? '')}</p>
+            <p className="text-xs text-slate-400">{String(r.email ?? r.phone ?? '')}</p>
           </div>
         ),
       },
@@ -314,12 +324,13 @@ export const RESOURCES: Record<string, ResourceConfig> = {
         ),
       },
     ],
+    requireOneOf: [['email', 'phone']],
     fields: [
       { name: 'firstName', label: 'First name', type: 'text', required: true },
       { name: 'lastName', label: 'Last name', type: 'text', required: true },
-      { name: 'email', label: 'Email', type: 'email', required: true },
+      { name: 'email', label: 'Email', type: 'email', helpText: 'Provide an email or a phone number' },
       { name: 'password', label: 'Password', type: 'password', required: true, hideOnEdit: true, helpText: 'Minimum 8 characters' },
-      { name: 'phone', label: 'Phone', type: 'text' },
+      { name: 'phone', label: 'Phone', type: 'text', helpText: 'Provide a phone number or an email' },
       { name: 'role', label: 'Role', type: 'select', options: ROLE_OPTIONS },
     ],
   },
